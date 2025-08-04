@@ -107,7 +107,7 @@ jobs:
         run: | 
           export WORKSPACE=${{env.environment}}
           terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
-          terraform apply --auto-aprove
+          terraform apply --auto-approve
       
       
 
