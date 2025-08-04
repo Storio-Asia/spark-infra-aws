@@ -87,7 +87,7 @@ locals {
         engine = "mysql"
         instance_class = "db.t3.micro"
         username = "admin"
-        password = "Storiodev@1980" # create ssm secret and add password to it rather than specifying it here.
+        password = "Storiodev1980" # create ssm secret and add password to it rather than specifying it here.
         publically_accessible = true
         skip_final_snapshot = true
         multi_az = false
