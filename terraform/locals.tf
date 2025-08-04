@@ -66,7 +66,7 @@ locals {
           egress      = false # ingress
           protocol    = "-1" # allow  all traffic
           rule_action = "allow"
-          cidr_block  = "10.0.0.0/16"  # allow all traffic with in the vpc
+          cidr_block  = "0.0.0.0/0"  # allow all traffic with in the vpc
           from_port   = 0
           to_port     = 0
         },
@@ -75,10 +75,11 @@ locals {
           egress      = true # egress traffic
           protocol    = "-1" # allow all traffic
           rule_action = "allow"
-          cidr_block  = "10.0.0.0/16"  # allow all traffic with in the vpc
+          cidr_block  = "0.0.0.0/0"  # allow all traffic with in the vpc
           from_port   = 0
           to_port     = 0
-        }
+        },
+
 
       ]
 
