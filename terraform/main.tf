@@ -53,7 +53,7 @@ resource "aws_subnet" "app" {
   tags = merge(
     local.env.tags,
     {
-        "Name" = "${local.workspace.client}-${local.workspace.environment}-web-subnet"
+        "Name" = "${local.workspace.client}-${local.workspace.environment}-app-subnet"
     }
   )
 }
@@ -85,7 +85,7 @@ resource "aws_subnet" "db" {
   tags = merge(
     local.env.tags,
     {
-        "Name" = "${local.workspace.client}-${local.workspace.environment}-web-subnet"
+        "Name" = "${local.workspace.client}-${local.workspace.environment}-db-subnet"
     }
   )
 }
@@ -250,6 +250,7 @@ resource "aws_security_group" "rds_sg" {
       cidr_blocks = egress.value.cidr_block
     }
   }
+  vpc_id = aws_vpc.this.id
   tags = merge(local.env.tags,
     {
        Name = "${local.workspace.client}-${local.workspace.environment}-sg"
