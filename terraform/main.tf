@@ -100,6 +100,12 @@ resource "aws_route_table" "db-rt" {
   )
 }
 
+resource "aws_route" "db_internet_route" {
+  route_table_id         = aws_route_table.db-rt
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.igw.id
+}
+
 resource "aws_route_table_association" "db" {
   count = length(aws_subnet.db)
 
