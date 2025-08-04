@@ -90,6 +90,13 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    strategy:
+      max-parallel: 10
+      matrix:
+        dir: ['terraform']
+    defaults:
+      run:
+        working-directory: ./${{matrix.dir}}
     
     steps:
       - name: Checkout code
