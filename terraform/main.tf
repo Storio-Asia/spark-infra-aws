@@ -48,7 +48,7 @@ resource "aws_route_table_association" "web" {
 resource "aws_subnet" "app" {
   count = length(local.workspace.subnets.app)
   vpc_id = aws_vpc.this.id
-  cidr_block = local.workspace.subnets.web[count.index]
+  cidr_block = local.workspace.subnets.app[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   tags = merge(
     local.env.tags,
@@ -79,7 +79,7 @@ resource "aws_route_table_association" "app" {
 resource "aws_subnet" "db" {
   count = length(local.workspace.subnets.db)
   vpc_id = aws_vpc.this.id
-  cidr_block = local.workspace.subnets.web[count.index]
+  cidr_block = local.workspace.subnets.db[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
   tags = merge(
@@ -261,8 +261,8 @@ resource "aws_security_group" "rds_sg" {
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name       = "rds-subnet-group"
   #count = length(aws_subnet.db)
-  #subnet_ids = [for s in aws_subnet.db: s.id] # this will be used if we would like to deploy multi az rds instance
-  subnet_ids = [aws_subnet.db[0].id] # first db subnet. Confining it to single AZ .
+  subnet_ids = [for s in aws_subnet.db: s.id] # this will be used if we would like to deploy multi az rds instance
+  #subnet_ids = [aws_subnet.db[0].id, aws_subnet.db[1].id] # first db subnet. Confining it to single AZ .
   tags = merge(local.env.tags,
     {
         Name = "${local.workspace.client}-${local.workspace.environment}-rds-subnetgroupid"
