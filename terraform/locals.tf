@@ -83,7 +83,7 @@ locals {
       ]
 
       mysql_instance = {
-        allocated_storage = 10
+        allocated_storage = 20
         engine = "mysql"
         instance_class = "db.t3.micro"
         username = "admin"
