@@ -99,6 +99,14 @@ jobs:
         working-directory: ./${{matrix.dir}}
     
     steps:
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::483898562597:role/github_role
+          role-session-name: storio_github_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+          
       - name: Checkout code
         uses: actions/checkout@v3
       
