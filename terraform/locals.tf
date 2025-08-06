@@ -157,8 +157,9 @@ locals {
           }
           admin = {
             user_arn = [
-              "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
-              "arn:aws:iam::${data.aws_caller_identity.current.account_id}:group/admin"]
+              "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":root",
+              "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":group/admin"
+              ]
           }
         }
 
