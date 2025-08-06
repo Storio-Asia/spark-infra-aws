@@ -52,7 +52,7 @@ module "eks" {
   enable_cluster_creator_admin_permissions = false
   
   access_entries = {
-    for k in local.workspace.eks.eks_access_entries : k.username => {
+    for k in local.eks_access_entries : k.username => {
       kubernetes_groups = []
       principal_arn     = k.username
       policy_associations = {
