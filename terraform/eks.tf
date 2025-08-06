@@ -49,7 +49,7 @@ module "eks" {
   node_security_group_additional_rules = local.workspace.eks.cluster_security_group_additional_rules
 
   enable_cluster_creator_admin_permissions = false
-
+  
   access_entries = {
     for k in local.workspace.eks.eks_access_entries : k.username => {
       kubernetes_groups = []

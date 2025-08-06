@@ -136,16 +136,14 @@ locals {
         cluster_security_group_additional_rules = {
 
           
-            allow_all_egress = [
-              {
-                type = "egress"
-                description = "allow all outbound"
-                from_port = 0
-                to_port = 0
-                protocol = "-1"
-                cidr_blocks = ["0.0.0.0/0"]
-              }
-            ]
+            allow_all_egress = {
+              type        = "egress"
+              description = "allow all outbound"
+              from_port   = 0
+              to_port     = 0
+              protocol    = "-1"
+              cidr_blocks = ["0.0.0.0/0"]
+            }
           
         }
 
@@ -163,6 +161,12 @@ locals {
               "arn:aws:iam::${data.aws_caller_identity.current.account_id}:group/admin"]
           }
         }
+
+        eks_access_policy = {
+          viewer = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
+          admin  = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+         }
+        eks_access_entries = flatten([for k, v in local.workspace.eks.eks_access_entries : [for s in v.user_arn : { username = s, access_policy = lookup(local.workspace.eks.eks_access_policy, k), group = k }]])
         # EKS Addons variables 
         coredns_config = {
           replicaCount = 1
