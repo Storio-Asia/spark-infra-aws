@@ -69,7 +69,7 @@ module "eks" {
 }
 #Role for vpc cni
 resource "aws_iam_role" "vpc_cni" {
-  name               = "${local.workspace.eks.prefix}-vpc-cni"
+  name               = "${local.workspace.eks.cluster_name}-vpc-cni"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
