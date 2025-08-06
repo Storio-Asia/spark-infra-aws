@@ -121,7 +121,7 @@ locals {
         # Global variables
         cluster_name                   = "storio-dev-eks-cluster"
         #env                            = "default"
-        region                         = local.env.aws_region
+        #region                         = local.env.aws_region
         #vpc_id                         = aws_vpc.this.id #"vpc-02af529e05c41b6bb"
         #vpc_cidr                       = local.workspace.cidr_block
         #public_subnet_ids              = [for subnet in aws_subnet.app : subnet.id] #["subnet-09aeb297a112767b2", "subnet-0e25e76fb4326ce99"]
