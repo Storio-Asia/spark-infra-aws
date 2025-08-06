@@ -23,11 +23,28 @@ module "eks" {
     }
   }
 
-  vpc_id     = local.workspace.eks.vpc_id
-  subnet_ids = local.workspace.eks.public_subnet_ids
+  vpc_id     = aws_vpc.this.id
+  subnet_ids = [for subnet in aws_subnet.app : subnet.id] #local.workspace.eks.public_subnet_ids
  
 
-  eks_managed_node_groups = local.workspace.eks.eks_managed_node_groups
+  eks_managed_node_groups = {
+          eks-dev-ng = {
+            min_size       = 1
+            max_size       = 1
+            desired_size   = 1
+            instance_types = ["t3.small"]
+            capacity_type  = "ON_DEMAND"
+            disk_size      = 60
+            ebs_optimized  = true
+            iam_role_additional_policies = {
+              ssm_access        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+              cloudwatch_access = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+              service_role_ssm  = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+              default_policy    = "arn:aws:iam::aws:policy/AmazonSSMManagedEC2InstanceDefaultPolicy"
+              custom = aws_iam_policy.node_efs_policy.arn
+            }
+          }
+        }
 
   node_security_group_additional_rules = local.workspace.eks.cluster_security_group_additional_rules
 
