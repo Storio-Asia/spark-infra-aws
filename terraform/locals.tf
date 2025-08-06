@@ -151,23 +151,7 @@ locals {
         enabled_log_types = [
           "audit"
           ]
-        eks_access_entries = {
-          viewer = {
-            user_arn = []
-          }
-          admin = {
-            user_arn = [
-              "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":root",
-              "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":group/admin"
-              ]
-          }
-        }
-
-        eks_access_policy = {
-          viewer = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
-          admin  = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-         }
-        eks_access_entries = flatten([for k, v in local.workspace.eks.eks_access_entries : [for s in v.user_arn : { username = s, access_policy = lookup(local.workspace.eks.eks_access_policy, k), group = k }]])
+        
         # EKS Addons variables 
         coredns_config = {
           replicaCount = 1
@@ -179,4 +163,52 @@ locals {
     
   }
   workspace = local.env[terraform.workspace]
+}
+
+
+
+locals {
+  eks_access_raw_entries = {
+    dev = {
+      viewer = {
+        user_arn = []
+      }
+      admin = {
+        user_arn = [
+          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/hbsheikh",
+          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/sohaib"
+        ]
+      }
+    }
+
+    prod = {
+      viewer = {
+        user_arn = [
+          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/prod-viewer"
+        ]
+      }
+      admin = {
+        user_arn = [
+          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/hbsheikh",
+          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/sohaib"
+        ]
+      }
+    }
+  }
+
+  eks_access_policies = {
+    viewer = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+    admin  = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  }
+
+  # Flattened access entries for current workspace
+  eks_access_entries = flatten([
+    for role, config in local.eks_access_raw_entries[terraform.workspace] : [
+      for arn in config.user_arn : {
+        username      = arn
+        access_policy = lookup(local.eks_access_policies, role)
+        group         = role
+      }
+    ]
+  ])
 }
