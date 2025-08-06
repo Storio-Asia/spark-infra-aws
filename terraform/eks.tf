@@ -3,7 +3,7 @@ module "eks" {
   version = "21.0.7"
   name = local.workspace.eks.cluster_name
   kubernetes_version = local.workspace.eks.cluster_version
-  enabled_log_types = local.workspace.eks.cluster_enabled_log_types
+  enabled_log_types = local.workspace.eks.enabled_log_types
   cloudwatch_log_group_retention_in_days = 30
   endpoint_public_access = true
   create_node_iam_role = true
@@ -97,7 +97,7 @@ resource "aws_iam_role_policy_attachment" "vpc_cni" {
 
 
 resource "aws_iam_policy" "node_efs_policy" {
-  name        = "eks_node_efs-${local.workspace.client}-${local.workspace.env}"
+  name        = "eks_node_efs-${local.workspace.client}-${local.workspace.environment}"
   path        = "/"
   description = "Policy for EFKS nodes to use EFS"
 
