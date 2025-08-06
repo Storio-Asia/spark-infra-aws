@@ -175,17 +175,15 @@ locals {
       }
       admin = {
         user_arn = [
-          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/hbsheikh",
-          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/sohaib"
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/hbsheikh",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/sohaib"
         ]
       }
     }
 
     prod = {
       viewer = {
-        user_arn = [
-          "arn:aws:iam::" + data.aws_caller_identity.current.account_id + ":user/prod-viewer"
-        ]
+        user_arn = []
       }
       admin = {
         user_arn = [
