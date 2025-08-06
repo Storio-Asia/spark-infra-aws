@@ -5,7 +5,8 @@ locals {
     tags = {
         Repository = ""
         Environment = "dev"
-        Project = ""
+        Project = "Storio"
+        Client = "Storio"
                
     }
     dev = {
@@ -115,7 +116,34 @@ locals {
         ]
       }
       
+      eks = {
+        
+        k8s_info = lookup(var.eks_environments, local.workspace)
+        cluster_name = lookup(local.workspace.eks.k8s_info, "cluster_name")
+        region = lookup(local.workspace.eks.k8s_info,"region")
+        env = lookup(local.workspace.eks.k8s_info, "env")
+        vpc_id = local.workspace.k8s_info.vpc_id
+        vpc_cidr   = lookup(local.workspace.eks.k8s_info, "vpc_cidr")
+        public_subnet_ids = lookup(local.workspace.eks.k8s_info, "public_subnet_ids") #node groups subnet ids
+        cluster_version = lookup(local.workspace.eks.k8s_info, "cluster_version")
+        enabled_log_types = lookup(local.workspace.eks.k8s_info, "enabled_log_types")
+        eks_managed_node_groups = lookup(local.workspace.eks.k8s_info, "eks_managed_node_groups")
+        cluster_security_group_additional_rules = lookup(local.workspace.eks.k8s_info, "cluster_security_group_additional_rules")
+        coredns_config = lookup(local.workspace.eks.k8s_info, "coredns_config")
+        ecr_names = lookup(local.workspace.eks.k8s_info, "ecr_names")
 
+        prefix = "${local.workspace.eks.project}-${local.workspace.environment}-${var.region}"
+        eks_access_entries = flatten([for k, v in local.workspace.eks.k8s_info.eks_access_entries : [for s in v.user_arn : { username = s, access_policy = lookup(local.workspace.eks.eks_access_policy, k), group = k }]])
+
+        eks_access_policy = {
+          viewer = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
+          admin  = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+        }
+        project    = "storio"
+        account_id = data.aws_caller_identity.current.account_id
+ 
+        
+      }
       
 
     }
