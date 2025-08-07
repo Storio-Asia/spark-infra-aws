@@ -1,58 +1,136 @@
 
+
+
 module "eks" {
   source = "terraform-aws-modules/eks/aws"
   version = "~>21.0"
-  name = var.eks_config.name
-  kubernetes_version = var.var.eks_config.kubernetes_version
-  enabled_log_types = var.eks_config.enabled_log_types
-  cloudwatch_log_group_retention_in_days = var.eks_config.cloudwatch_log_group_retention_in_days
-  endpoint_public_access = var.eks_config.endpoint_public_access
-  create_node_iam_role = var.eks_config.create_node_iam_role
-  vpc_id     = aws_vpc.this.id #var.eks_config.vpc_id
-  subnet_ids = [for subnet in aws_subnet.app : subnet.id]
+  
 
+  name = var.eks_config.name
+  kubernetes_version = var.eks_config.kubernetes_version
+  endpoint_public_access = var.eks_config.endpoint_public_access
+  enable_cluster_creator_admin_permissions = var.eks_config.enable_cluster_creator_admin_permissions
+  vpc_id = var.eks_config.vpc_id
+  subnet_ids = var.eks_config.subnet_ids
+  eks_managed_node_groups = local.node_config_with_efs
+  #node_security_group_additional_rules = var.eks_config.node_security_group_additional_rules
+  access_entries = var.eks_config.access_entries
+  tags = var.eks_config.tags
   addons = {
     coredns = {
-      most_recent                 = true
-      resolve_conflicts_on_create = "OVERWRITE"
-      configuration_values        = jsonencode(var.eks_config.coredns_config)
+      replicaCount = 2
+    }
+    
+    eks-pod-identity-agent = {
+      before_compute = true
     }
     kube-proxy = {
-      most_recent = true
+
     }
     vpc-cni = {
-      most_recent = true
       before_compute = true
-      service_account_role_arn = var.eks_config.cni_service_account_role_arn
+      service_account_role_arn = aws_iam_role.vpc_cni.arn
     }
+    aws-efs-csi-driver = {
+
+      service_account_role_arn = aws_iam_role.efs_csi_role.arn
+    }
+
   }
+}
+#Role for vpc cni
+resource "aws_iam_policy" "efs_access" {
+  name        = "EKS-EFS-Access"
+  description = "Allow EKS worker nodes to mount EFS file systems"
+  policy      = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "elasticfilesystem:DescribeFileSystems",
+          "elasticfilesystem:DescribeMountTargets",
+          "elasticfilesystem:DescribeAccessPoints",
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite",
+          "elasticfilesystem:ClientRootAccess"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
 
-  
- 
-
-  eks_managed_node_groups = var.eks_config.eks_managed_node_groups
-  node_security_group_additional_rules = var.eks_config.node_security_group_additional_rules
-
-  enable_cluster_creator_admin_permissions = var.eks_config. enable_cluster_creator_admin_permissions
-  
-  access_entries = {
-    for k in var.eks_config.access_entries : k.username => {
-      kubernetes_groups = []
-      principal_arn     = k.username
-      policy_associations = {
-        single = {
-          policy_arn = k.access_policy
-          access_scope = {
-            type = "cluster"
-          }
+resource "aws_iam_role" "vpc_cni" {
+  name               = "eks-vpc-cni-role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "${module.eks.oidc_provider_arn}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${module.eks.oidc_provider}:aud": "sts.amazonaws.com"
+          "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:aws-node"
         }
       }
     }
-  }
-  tags = local.env.tags
+  ]
 }
-#Role for vpc cni
+EOF
+}
+resource "aws_iam_role_policy_attachment" "vpc_cni" {
+  role       = aws_iam_role.vpc_cni.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 
+}
 
+resource "aws_iam_role" "efs_csi_role" {
+  name               = "eks_efs_role"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "${module.eks.oidc_provider_arn}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+        "${module.eks.oidc_provider}:aud": "sts.amazonaws.com"
+        "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:efs-csi-controller-sa"
+        }
+      }
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "efs_csi_policy_attachment" {
+  role       = aws_iam_role.efs_csi_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicyy"
 
+}
+
+locals{
+ node_config_with_efs = {
+    for k, v in var.eks_config.eks_managed_node_groups :
+    k => merge(
+      v,
+      {
+        iam_role_additional_policies = merge(
+          v.iam_role_additional_policies,
+          { efs_access = aws_iam_policy.efs_access.arn }
+        )
+      }
+    )
+  }
+}
 

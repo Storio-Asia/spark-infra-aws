@@ -301,9 +301,74 @@ resource "aws_db_instance" "mysql" {
 
 ################################################### RDS Instance deployment end ##########################################
 
+######################## VPC flow logs #############################
+resource "aws_iam_role" "vpc_flow_logs_role" {
+  name = "VPCFlowLogsRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "vpc-flow-logs.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "vpc_flow_logs_policy" {
+  # checkov:skip=CKV_AWS_355: "Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions"
+  # checkov:skip=CKV_AWS_290: "Ensure IAM policies does not allow write access without constraints"
+  name        = "VPCFlowLogsPolicy"
+  description = "Policy for VPC Flow Logs to push logs to CloudWatch Logs"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "vpc_flow_logs_role_policy_attachment" {
+  policy_arn = aws_iam_policy.vpc_flow_logs_policy.arn
+  role      = aws_iam_role.vpc_flow_logs_role.name
+}
+
+resource "aws_cloudwatch_log_group" "this" {
+  # checkov:skip=CKV_AWS_158: "Ensure that CloudWatch Log Group is encrypted by KMS"
+  # checkov:skip=CKV_AWS_338: "Ensure CloudWatch log groups retains logs for at least 1 year"
+  name              =  "vpc/flowlogs/${aws_vpc.this.id}"
+  retention_in_days = 90
+  tags = local.env.tags
+}
+
+resource "aws_flow_log" "local" {
+  #count = local.enable_flow_log ? 1 : 0
+
+  iam_role_arn               = aws_iam_role.vpc_flow_logs_role.arn
+  log_destination_type       = "cloud-watch-logs"
+  log_destination            = aws_cloudwatch_log_group.this.arn
+  vpc_id                     = aws_vpc.this.id
+
+  tags = local.env.tags
+}
+##########################end vpc flow logs#########################
+
 
 resource "aws_iam_policy" "node_efs_policy" {
-  name        = "eks_node_efs_stoiro_dev_policy"
+  name        = "eks_node_efs_policy"
   path        = "/"
   description = "Policy for EFKS nodes to use EFS"
 
@@ -328,35 +393,63 @@ resource "aws_iam_policy" "node_efs_policy" {
   )
 }
 
-resource "aws_iam_role" "vpc_cni" {
-  name               = "${local.workspace.eks.name}-vpc-cni"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "${module.eks.oidc_provider_arn}"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:aws-node"
-        }
-      }
-    }
-  ]
-}
-EOF
-}
-resource "aws_iam_role_policy_attachment" "vpc_cni" {
-  role       = aws_iam_role.vpc_cni.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-
+locals {
+  flatten_access_entries =  flatten([for k, v in local.workspace.eks.eks_access_entries: [for s in v.user_arn : { username = s, access_policy = lookup(local.workspace.eks.eks_access_policy, k), group = k }]])
+  
 }
 
+
+
+resource "aws_s3_bucket" "spark-dev-bucket" {
+  bucket = "Storio-spark${local.workspace.environment}-bucket"
+  
+}
+
+resource "aws_s3_bucket_acl" "private" {
+  acl = "private"
+  bucket = aws_s3_bucket.spark-dev-bucket.id
+}
 module "eks"{
   source = "./modules/eks"
-  eks_config = local.workspace.eks
+  eks_config = merge(local.workspace.eks,
+    {
+      vpc_id = aws_vpc.this.id
+      subnet_ids = [for s in aws_subnet.app : s.id]
+
+      access_entries = {
+          for k in local.flatten_access_entries : k.username => {
+            kubernetes_groups = []
+            principal_arn     = k.username
+            policy_associations = {
+              single = {
+                policy_arn = k.access_policy
+                access_scope = {
+                  type = "cluster"
+                }
+              }
+            }
+          }
+      }
+
+      tags = merge(local.env.tags, 
+          {
+            Terraform = true
+          }
+        )
+
+    }
+  )
+  
 }
+
+module efs{
+  source = "./modules/efs"
+  token = "Spark-${local.workspace.client}-${local.workspace.environment}-token"
+  tags = merge(local.env.tags, {
+    Name = "Spark-storio-${local.workspace.environment}-efs-filesystem"
+  })
+  #mount_subnets = [for subnet in aws_subnet.app : subnet.id]
+ 
+}
+
+
