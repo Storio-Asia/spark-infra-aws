@@ -303,7 +303,7 @@ resource "aws_db_instance" "mysql" {
 
 
 resource "aws_iam_policy" "node_efs_policy" {
-  name        = "eks_node_efs-${local.workspace.client}-${local.workspace.environment}"
+  name        = "eks_node_efs_stoiro_dev_policy"
   path        = "/"
   description = "Policy for EFKS nodes to use EFS"
 
