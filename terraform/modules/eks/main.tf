@@ -8,8 +8,8 @@ module "eks" {
   cloudwatch_log_group_retention_in_days = eks_env.cloudwatch_log_group_retention_in_days
   endpoint_public_access = eks_env.endpoint_public_access
   create_node_iam_role = eks_env.create_node_iam_role
-  vpc_id     = eks_env.vpc_id
-  subnet_ids = eks_env.subnet_ids #local.workspace.eks.public_subnet_ids
+  vpc_id     = aws_vpc.this.id
+  subnet_ids = [for subnet in aws_subnet.app : subnet.id]
 
   addons = {
     coredns = {
