@@ -358,5 +358,5 @@ resource "aws_iam_role_policy_attachment" "vpc_cni" {
 
 module "eks"{
   source = "./modules/eks"
-  eks_env = local.workspace.eks
+  eks_config = local.workspace.eks
 }
