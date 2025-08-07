@@ -134,7 +134,7 @@ locals {
               service_role_ssm  = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
               default_policy    = "arn:aws:iam::aws:policy/AmazonSSMManagedEC2InstanceDefaultPolicy"
             }
-            instance_types = ["t3.medium"]
+            instance_types = ["t3.micro"]
 
             min_size     = 1
             max_size     = 1
