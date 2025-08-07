@@ -124,8 +124,8 @@ locals {
         name                   = lookup(k8s_info,"cluster_name")
         #env                            = "default"
         #region                         = local.env.aws_region --> this default to provider region which will be passed as variable when terraform is initialised
-        vpc_id                         = aws_vpc.this.id
-        subnet_ids = [for subnet in aws_subnet.app : subnet.id]
+        #vpc_id                         = aws_vpc.this.id
+        #subnet_ids = [for subnet in aws_subnet.app : subnet.id]
         kubernetes_version                = lookup(k8s_info,"cluster_version ")
         endpoint_public_access = lookup(k8s_info,"cluster_endpoint_public_access")
         #ecr_names                      = ["codedevops"]
