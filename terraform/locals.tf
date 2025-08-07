@@ -120,93 +120,58 @@ locals {
       eks = {
   
         # Global variables
-        cluster_name                   = "storio-dev-eks-cluster"
+        k8s_info = lookup(var.eks_env,local.env.environment)
+        name                   = lookup(k8s_info,"cluster_name")
         #env                            = "default"
-        #region                         = local.env.aws_region
-        #vpc_id                         = aws_vpc.this.id #"vpc-02af529e05c41b6bb"
-        #vpc_cidr                       = local.workspace.cidr_block
-        #public_subnet_ids              = [for subnet in aws_subnet.app : subnet.id] #["subnet-09aeb297a112767b2", "subnet-0e25e76fb4326ce99"]
-        cluster_version                = "1.33"
-        cluster_endpoint_public_access = true
+        #region                         = local.env.aws_region --> this default to provider region which will be passed as variable when terraform is initialised
+        vpc_id                         = aws_vpc.this.id
+        subnet_ids = [for subnet in aws_subnet.app : subnet.id]
+        kubernetes_version                = lookup(k8s_info,"cluster_version ")
+        endpoint_public_access = lookup(k8s_info,"cluster_endpoint_public_access")
         #ecr_names                      = ["codedevops"]
-
+        
+        cloudwatch_log_group_retention_in_days = lookup(k8s_info,"cloudwatch_log_group_retention_in_days")
+        create_node_iam_role = lookup(k8s_info,"create_node_iam_role")
+        enable_cluster_creator_admin_permissions = lookup(k8s_info,"enable_cluster_creator_admin_permissions")
+        cni_service_account_role_arn = aws_iam_role.vpc_cni.arn
+        
         # EKS variables
         
-
-        cluster_security_group_additional_rules = {
-
-          
-            allow_all_egress = {
-              type        = "egress"
-              description = "allow all outbound"
-              from_port   = 0
-              to_port     = 0
-              protocol    = "-1"
-              cidr_blocks = ["0.0.0.0/0"]
+        eks_managed_node_groups = {
+          eks-dev-ng = {
+            min_size       = 1
+            max_size       = 1
+            desired_size   = 1
+            instance_types = ["t3.small"]
+            capacity_type  = "ON_DEMAND"
+            disk_size      = 60
+            ebs_optimized  = true
+            iam_role_additional_policies = {
+              ssm_access        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+              cloudwatch_access = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+              service_role_ssm  = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+              default_policy    = "arn:aws:iam::aws:policy/AmazonSSMManagedEC2InstanceDefaultPolicy"
+              custom = aws_iam_policy.node_efs_policy.arn
             }
-          
+          }
         }
-
-        # EKS Cluster Logging
-        enabled_log_types = [
-          "audit"
-          ]
         
-        # EKS Addons variables 
-        coredns_config = {
-          replicaCount = 1
+        cluster_security_group_additional_rules = lookup(k8s_info,"cluster_security_group_additional_rules")
+        enabled_log_types = lookup(k8s_info,"enable)log_types")        
+        node_security_group_additional_rules = lookup(k8s_info,"node_security_group_additional_rules")
+        coredns_config = lookup(k8s_info,"coredns_config")
+        eks_access_policy = {
+          viewer = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy",
+          admin  = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
         }
-      }
 
-    } ### ebd of DEV environment
+
+        access_entries = flatten([for k,v in local.k8s_info.access_entries : [for s in v.user_arn : {username = s, access_policy = lookup(local.dev.eks_access_policy, k), group = k}]])
+      } # ## end of EKS DEV environment
+
+    } # End of DEV block
 
     
   }
   workspace = local.env[terraform.workspace]
-}
-
-
-
-locals {
-  eks_access_raw_entries = {
-    dev = {
-      viewer = {
-        user_arn = []
-      }
-      admin = {
-        user_arn = [
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/hbsheikh",
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/sohaib"
-        ]
-      }
-    }
-
-    prod = {
-      viewer = {
-        user_arn = []
-      }
-      admin = {
-        user_arn = [
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/hbsheikh",
-          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/sohaib"
-        ]
-      }
-    }
-  }
-
-  eks_access_policies = {
-    viewer = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-    admin  = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  }
-
-  # Flattened access entries for current workspace
-  eks_access_entries = flatten([
-    for role, config in local.eks_access_raw_entries[terraform.workspace] : [
-      for arn in config.user_arn : {
-        username      = arn
-        access_policy = lookup(local.eks_access_policies, role)
-        group         = role
-      }
-    ]
-  ])
 }

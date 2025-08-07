@@ -300,3 +300,63 @@ resource "aws_db_instance" "mysql" {
 }
 
 ################################################### RDS Instance deployment end ##########################################
+
+
+resource "aws_iam_policy" "node_efs_policy" {
+  name        = "eks_node_efs-${local.workspace.client}-${local.workspace.environment}"
+  path        = "/"
+  description = "Policy for EFKS nodes to use EFS"
+
+  policy = jsonencode({
+    "Statement": [
+        {
+            "Action": [
+                "elasticfilesystem:DescribeMountTargets",
+                "elasticfilesystem:DescribeFileSystems",
+                "elasticfilesystem:DescribeAccessPoints",
+                "elasticfilesystem:CreateAccessPoint",
+                "elasticfilesystem:DeleteAccessPoint",
+                "ec2:DescribeAvailabilityZones"
+            ],
+            "Effect": "Allow",
+            "Resource": "*",
+            "Sid": ""
+        }
+    ],
+    "Version": "2012-10-17"
+}
+  )
+}
+
+resource "aws_iam_role" "vpc_cni" {
+  name               = "${local.workspace.eks.name}-vpc-cni"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "${module.eks.oidc_provider_arn}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:aws-node"
+        }
+      }
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "vpc_cni" {
+  role       = aws_iam_role.vpc_cni.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+
+}
+
+module "eks"{
+  source = "./modules/eks"
+  eks_env = local.workspace.eks
+}
