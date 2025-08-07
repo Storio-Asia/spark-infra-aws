@@ -75,7 +75,7 @@ resource "aws_iam_role" "vpc_cni" {
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "${module.eks.oidc_provider}:aud": "sts.amazonaws.com"
+          "${module.eks.oidc_provider}:aud": "sts.amazonaws.com",
           "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:aws-node"
         }
       }
@@ -104,7 +104,7 @@ resource "aws_iam_role" "efs_csi_role" {
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-        "${module.eks.oidc_provider}:aud": "sts.amazonaws.com"
+        "${module.eks.oidc_provider}:aud": "sts.amazonaws.com",
         "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:efs-csi-controller-sa"
         }
       }
