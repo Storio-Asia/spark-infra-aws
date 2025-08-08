@@ -23,7 +23,8 @@ resource "aws_subnet" "web" {
   tags = merge(
     local.env.tags,
     {
-        "Name" = "${local.workspace.client}-${local.workspace.environment}-web-subnet"
+        "Name" = "${local.workspace.client}-${local.workspace.environment}-web-subnet",
+        "kubernetes.io/role/elb" = "1"
     }
   )
 }
@@ -427,10 +428,7 @@ resource "aws_s3_bucket" "spark-dev-bucket" {
   
 }
 
-resource "aws_s3_bucket_acl" "private" {
-  acl = "private"
-  bucket = aws_s3_bucket.spark-dev-bucket.id
-}
+
 module "eks"{
   source = "./modules/eks"
   eks_config = merge(local.workspace.eks,
