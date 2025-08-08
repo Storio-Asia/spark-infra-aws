@@ -361,6 +361,7 @@ resource "aws_flow_log" "local" {
   log_destination_type       = "cloud-watch-logs"
   log_destination            = aws_cloudwatch_log_group.this.arn
   vpc_id                     = aws_vpc.this.id
+  traffic_type = "ALL"
 
   tags = local.env.tags
 }
@@ -401,7 +402,7 @@ locals {
 
 
 resource "aws_s3_bucket" "spark-dev-bucket" {
-  bucket = "Storio-spark${local.workspace.environment}-bucket"
+  bucket = "storio-spark${local.workspace.environment}-bucket"
   
 }
 

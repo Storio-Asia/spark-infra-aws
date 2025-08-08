@@ -115,7 +115,7 @@ EOF
 }
 resource "aws_iam_role_policy_attachment" "efs_csi_policy_attachment" {
   role       = aws_iam_role.efs_csi_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicyy"
+  policy_arn = aws_iam_policy.efs_access.arn
 
 }
 
