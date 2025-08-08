@@ -9,6 +9,7 @@ module "eks" {
   name = var.eks_config.name
   kubernetes_version = var.eks_config.kubernetes_version
   endpoint_public_access = var.eks_config.endpoint_public_access
+  endpoint_private_access = var.eks_config.endpoint_private_access
   enable_cluster_creator_admin_permissions = var.eks_config.enable_cluster_creator_admin_permissions
   vpc_id = var.eks_config.vpc_id
   subnet_ids = var.eks_config.subnet_ids
