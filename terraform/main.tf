@@ -238,7 +238,7 @@ resource "aws_eip" "nat_eip" {
 resource "aws_nat_gateway" "this" {
   subnet_id = aws_subnet.web[0].id
   allocation_id = aws_eip.nat_eip.id
-  tags = merge(loca.evn.tags,{
+  tags = merge(local.evn.tags,{
     Name = "storio-${local.workspace.environment}-ngw"
   })
 }
