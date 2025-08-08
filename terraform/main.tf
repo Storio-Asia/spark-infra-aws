@@ -370,7 +370,7 @@ resource "aws_iam_role_policy_attachment" "vpc_flow_logs_role_policy_attachment"
 resource "aws_cloudwatch_log_group" "this" {
   # checkov:skip=CKV_AWS_158: "Ensure that CloudWatch Log Group is encrypted by KMS"
   # checkov:skip=CKV_AWS_338: "Ensure CloudWatch log groups retains logs for at least 1 year"
-  name              =  "vpc/flowlogs/${aws_vpc.this.id}"
+  name              =  "vpc/flowlogs/spark-storio-dev-${aws_vpc.this.id}"
   retention_in_days = 90
   tags = local.env.tags
 }
