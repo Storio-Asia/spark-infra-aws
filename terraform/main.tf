@@ -228,6 +228,27 @@ resource "aws_internet_gateway" "igw" {
   )
 }
 
+resource "aws_eip" "nat_eip" {
+      
+      tags = merge(local.env.tags,{
+        Name = "nat-eip"
+      })
+}
+
+resource "aws_nat_gateway" "this" {
+  subnet_id = aws_subnet.web[0].id
+  allocation_id = aws_eip.nat_eip.id
+  tags = merge(loca.evn.tags,{
+    Name = "storio-${workspace.environment}-ngw"
+  })
+}
+
+
+resource "aws_route" "app_internet_route" {
+  route_table_id         = aws_route_table.app-rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_nat_gateway.this.id
+}
 
 #################################### my sql rd instance ###########################################
 
