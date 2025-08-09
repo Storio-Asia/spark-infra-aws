@@ -487,11 +487,6 @@ data "aws_eks_cluster_auth" "this" {
   name = module.eks.cluster_name
 }
 
-resource "aws_iam_openid_connect_provider" "eks" {
-  url = module.eks.cluster_oidc_issuer_url # data.aws_eks_cluster.this.identity[0].oidc[0].eks_oidc_issuer_url
-  client_id_list = ["sts.amazonaws.com"]
-  thumbprint_list = [module.eks.cluster_tls_certificate_sha1_fingerprint] #["e3ca7cbe219fbb754692d2d8474c46932b9ae1df"]
-}
 
 
 resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
