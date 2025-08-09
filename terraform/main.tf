@@ -1,6 +1,4 @@
-data "aws_availability_zones" "available" {
-  state = "available"
-}
+
 
 resource "aws_vpc" "this" {
   cidr_block = local.workspace.cidr_block
@@ -473,3 +471,80 @@ module efs{
 }
 
 
+####################### AWS Load balancer controller installation ############################
+
+
+
+data "tls_certificate" "eks_oidc_issuer_url" {
+  url = module.eks.cluster_dualstack_oidc_url
+}
+
+data "aws_eks_cluster" "this" {
+  name = module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  url = module.eks.cluster_dualstack_oidc_issuer_url # data.aws_eks_cluster.this.identity[0].oidc[0].eks_oidc_issuer_url
+  client_id_list = ["sts.amazonaws.com"]
+  thumbprint_list = module.eks.cluster_tls_certificate_sha1_fingerprint #["e3ca7cbe219fbb754692d2d8474c46932b9ae1df"]
+}
+
+
+resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
+  name        = "AWSLoadBalancerControllerIAMPolicy"
+  path        = "/"
+  description = "AWS EKS Load balancer controller policy"
+
+  policy = file("${path.module}/modules/policies/AWSLoadBalancerControllerIAMPolicy.json")
+  
+}
+
+resource "aws_iam_role" "alb_controller" {
+  name = "AmazonEKSLoadBalancerControllerRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.eks.arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "alb_controller_attach" {
+  role       = aws_iam_role.alb_controller.name
+  policy_arn = aws_iam_policy.AWSLoadBalancerControllerIAMPolicy.arn
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate =  base64decode(module.eks.cluster_certificate_authority_data)# base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+resource "kubernetes_service_account" "alb_controller" {
+  metadata {
+    name      = "aws-load-balancer-controller"
+    namespace = "kube-system"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
+    }
+  }
+}
+
+##############################################################################################
