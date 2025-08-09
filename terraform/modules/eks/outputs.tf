@@ -21,6 +21,6 @@ output "cluster_tls_certificate_sha1_fingerprint" {
   value = module.eks.cluster_tls_certificate_sha1_fingerprint
 }
 
-output "cluster_dualstack_oidc_issuer_url" {
-  value = module.eks.cluster_dualstack_oidc_issuer_url
+output "cluster_oidc_issuer_url" {
+  value = module.eks.cluster_oidc_issuer_url
 }
