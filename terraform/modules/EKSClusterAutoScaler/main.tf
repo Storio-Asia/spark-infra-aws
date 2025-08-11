@@ -1,0 +1,73 @@
+
+
+resource "aws_iam_policy" "EKSAutoScalerPolicy" {
+  name        = "AWSEKSAutoScalerPolicy"
+  path        = "/"
+  description = "AWS EKS Cluster AutoScaler policy"
+
+  policy = data.aws_iam_policy_document.cluster_autoscaler_policy_document.json
+  
+}
+
+############# AWS EKS Cluster auto scaler role ########################
+resource "aws_iam_role" "eks_auto_scaler_role" {
+  name = "AmazonEKSLoadBalancerControllerRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = module.eks.oidc_provider_arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "${module.eks.oidc_provider_arn}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${module.eks.oidc_provider_arn}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "aeks_autoscaler_attach" {
+  role       = aws_iam_role.eks_auto_scaler_role.name
+  policy_arn = aws_iam_policy.EKSAutoScalerPolicy.arn
+}
+
+resource "kubernetes_service_account" "eks_autosacler_sa" {
+  metadata {
+    name      = "cluster-autoscaler"
+    namespace = "kube-system"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.eks_auto_scaler_role.arn
+    }
+  }
+}
+/*
+resource "helm_release" "cluster_autoscaler" {
+  name = "cluster-autoscaler"
+  namespace = "kube-system"
+  repository = "https://kubernetes.github.io/autoscaler"
+  chart = "cluster-autoscaler"
+  version = "9.49.0"
+  set {
+    name = "autoDiscovery.clusterName"
+    value = module.eks.cluster_name
+  }
+
+  set{
+    name = "rbac.serviceAccount.create"
+    value = false
+  }
+
+  set {
+    name = "rbac.serviceAccount.name"
+    value = kubernetes_service_account.eks_autosacler_sa.metadata[0].name
+  }
+}
+*/
+

@@ -374,6 +374,7 @@ resource "aws_cloudwatch_log_group" "this" {
   tags = local.env.tags
 }
 
+########### vpc flowlogs ################
 resource "aws_flow_log" "local" {
   #count = local.enable_flow_log ? 1 : 0
 
@@ -387,7 +388,7 @@ resource "aws_flow_log" "local" {
 }
 ##########################end vpc flow logs#########################
 
-
+########### EFS policy will be attached to the workder for mounting of EFS file system ###############
 resource "aws_iam_policy" "node_efs_policy" {
   name        = "eks_node_efs_policy"
   path        = "/"
@@ -419,14 +420,14 @@ locals {
   
 }
 
-
+############ S3 bucket ##################
 
 resource "aws_s3_bucket" "spark-dev-bucket" {
   bucket = "storio-spark${local.workspace.environment}-bucket"
   
 }
 
-
+############ EKS Cluster deployment #####################
 module "eks"{
   source = "./modules/eks"
   eks_config = merge(local.workspace.eks,
@@ -460,6 +461,25 @@ module "eks"{
   
 }
 
+############# Load balancer module. Sets up ELB, its Iam role, SA account and install it via helm ################################
+module "elb"{
+  source = "./modules/awsloadbalancerController"
+  eks_cluster_name = module.eks.cluster_name
+  eks_cluster_endpoint = module.eks.cluster_endpoint
+  eks_oidc_issuer_url = module.eks.cluster_oidc_issuer_url
+  eks_oidc_provider_arn = module.eks.oidc_provider_arn
+  cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
+}
+
+module "eksautoscaler"{
+  source = "./modules/EKSClusterAutoScaler"
+  eks_cluster_name = module.eks.cluster_name
+  eks_cluster_endpoint = module.eks.cluster_endpoint
+  eks_oidc_issuer_url = module.eks.cluster_oidc_issuer_url
+  eks_oidc_provider_arn = module.eks.oidc_provider_arn
+  cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
+}
+############## creating EFS file system (EFS mount targets are created manually as terraform complained about subnet ids provided for mount target since ID of the subnet will not be known at plan time)###################
 module efs{
   source = "./modules/efs"
   token = "Spark-${local.workspace.client}-${local.workspace.environment}-token"
@@ -471,87 +491,3 @@ module efs{
 }
 
 
-####################### AWS Load balancer controller installation ############################
-
-
-
-data "tls_certificate" "eks_oidc_issuer_url" {
-  url = module.eks.cluster_oidc_issuer_url
-}
-
-data "aws_eks_cluster" "this" {
-  name = module.eks.cluster_name
-}
-
-data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
-}
-
-
-
-resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
-  name        = "AWSLoadBalancerControllerIAMPolicy"
-  path        = "/"
-  description = "AWS EKS Load balancer controller policy"
-
-  policy = file("${path.module}/modules/policies/AWSLoadBalancerControllerIAMPolicy.json")
-  
-}
-
-resource "aws_iam_role" "alb_controller" {
-  name = "AmazonEKSLoadBalancerControllerRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = module.eks.oidc_provider_arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${module.eks.oidc_provider_arn}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
-            "${module.eks.oidc_provider_arn}:aud" = "sts.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "alb_controller_attach" {
-  role       = aws_iam_role.alb_controller.name
-  policy_arn = aws_iam_policy.AWSLoadBalancerControllerIAMPolicy.arn
-}
-
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate =  base64decode(module.eks.cluster_certificate_authority_data)# base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.this.token
-}
-
-resource "kubernetes_service_account" "alb_controller" {
-  metadata {
-    name      = "aws-load-balancer-controller"
-    namespace = "kube-system"
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
-    }
-  }
-}
-
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      args        = ["eks", "get-token", "--cluster-name", data.aws_eks_cluster.cluster.name]
-      command     = "aws"
-    }
-  }
-}
-
-##############################################################################################
