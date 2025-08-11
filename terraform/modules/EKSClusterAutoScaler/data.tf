@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "cluster_autoscaler_policy_document" {
 
     condition {
       test     = "StringEquals"
-      variable = "aws:ResourceTag/k8s.io/cluster-autoscaler/${module.eks.cluster_name}"
+      variable = "aws:ResourceTag/k8s.io/cluster-autoscaler/${var.eks_cluster_name}"
       values   = ["owned"]
     }
   }

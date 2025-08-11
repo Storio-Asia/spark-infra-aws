@@ -19,13 +19,13 @@ resource "aws_iam_role" "eks_auto_scaler_role" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = module.eks.oidc_provider_arn
+          Federated = var.eks_oidc_provider_arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${module.eks.oidc_provider_arn}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
-            "${module.eks.oidc_provider_arn}:aud" = "sts.amazonaws.com"
+            "${var.eks_oidc_provider_arn}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${var.eks_oidc_provider_arn}:aud" = "sts.amazonaws.com"
           }
         }
       }
