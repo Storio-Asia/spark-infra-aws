@@ -9,7 +9,7 @@ resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
   path        = "/"
   description = "AWS EKS Load balancer controller policy"
 
-  policy = file("../policies/AWSLoadBalancerControllerIAMPolicy.json")
+  policy = file("${path.module}/policies/AWSLoadBalancerControllerIAMPolicy.json")
   
 }
 
