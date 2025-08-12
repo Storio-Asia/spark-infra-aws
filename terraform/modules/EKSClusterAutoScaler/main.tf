@@ -49,26 +49,25 @@ resource "kubernetes_service_account" "eks_autosacler_sa" {
 }
 
 resource "helm_release" "cluster_autoscaler" {
-  name = "cluster-autoscaler"
-  namespace = "kube-system"
-  repository = "https://kubernetes.github.io/autoscaler"
-  chart = "cluster-autoscaler"
-  version = "9.49.0"
-  set       {
-      name = "autoDiscovery.clusterName"
+  name       = "clusterautoscaler"
+  namespace  = "kube-system"
+  chart      = "cluster-autoscaler"
+  version    = "9.49.0"
+ 
+  set = [
+    {
+      name  = "autoDiscovery.clusterName"
       value = module.eks.cluster_name
+    },
+    {
+      name  = "rbac.serviceAccount.create"
+      value = "false"
+    },
+    {
+      name  = "rbac.serviceAccount.name"
+      value = kubernetes_service_account.eks_autosacler_sa.metadata[0].name
     }
-  
-
-  set  {
-    name = "rbac.serviceAccount.create"
-    value = false
-  }
-
-  set  {
-    name = "rbac.serviceAccount.name"
-    value = kubernetes_service_account.eks_autosacler_sa.metadata[0].name
-  }
+  ]
 }
 
 
