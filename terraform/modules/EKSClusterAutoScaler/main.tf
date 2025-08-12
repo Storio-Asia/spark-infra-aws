@@ -24,8 +24,8 @@ resource "aws_iam_role" "eks_auto_scaler_role" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${var.eks_oidc_provider_arn}:sub" = "system:serviceaccount:kube-system:cluster-autoscaler"
-            "${var.eks_oidc_provider_arn}:aud" = "sts.amazonaws.com"
+            "${replace(var.eks_oidc_issuer_url, "https://", "")}:sub" = "system:serviceaccount:${kubernetes_service_account.meta[0].namespace}:${kubernetes_service_account.meta[0].name}"
+            "${replace(var.eks_oidc_issuer_url, "https://", "")}:aud" = "sts.amazonaws.com"
           }
         }
       }
