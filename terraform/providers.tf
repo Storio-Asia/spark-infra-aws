@@ -22,7 +22,7 @@ provider "kubernetes" {
 }
 
 
-
+# if you seeing are ide error , this is because my ide version of terraform might be outdated. Below is correct syntax for it
 provider "helm" {
   alias = "k8shelm"
   kubernetes =  {

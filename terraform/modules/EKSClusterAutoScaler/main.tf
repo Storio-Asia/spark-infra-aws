@@ -11,7 +11,7 @@ resource "aws_iam_policy" "EKSAutoScalerPolicy" {
 
 ############# AWS EKS Cluster auto scaler role ########################
 resource "aws_iam_role" "eks_auto_scaler_role" {
-  name = "AmazonEKSLoadBalancerControllerRole"
+  name = "AmazonEKSAutoScalerControllerRole"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -24,7 +24,7 @@ resource "aws_iam_role" "eks_auto_scaler_role" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "${var.eks_oidc_provider_arn}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+            "${var.eks_oidc_provider_arn}:sub" = "system:serviceaccount:kube-system:cluster-autoscaler"
             "${var.eks_oidc_provider_arn}:aud" = "sts.amazonaws.com"
           }
         }
