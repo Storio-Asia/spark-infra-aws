@@ -51,6 +51,7 @@ resource "kubernetes_service_account" "eks_autosacler_sa" {
 resource "helm_release" "cluster_autoscaler" {
   name       = "clusterautoscaler"
   namespace  = "kube-system"
+  repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
   version    = "9.49.0"
  
