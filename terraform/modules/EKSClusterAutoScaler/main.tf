@@ -54,17 +54,18 @@ resource "helm_release" "cluster_autoscaler" {
   repository = "https://kubernetes.github.io/autoscaler"
   chart = "cluster-autoscaler"
   version = "9.49.0"
-  set = {
-    name = "autoDiscovery.clusterName"
-    value = module.eks.cluster_name
-  }
+  set       {
+      name = "autoDiscovery.clusterName"
+      value = module.eks.cluster_name
+    }
+  
 
-  set = {
+  set  {
     name = "rbac.serviceAccount.create"
     value = false
   }
 
-  set = {
+  set  {
     name = "rbac.serviceAccount.name"
     value = kubernetes_service_account.eks_autosacler_sa.metadata[0].name
   }
