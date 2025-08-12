@@ -50,4 +50,5 @@ resource "kubernetes_service_account" "alb_controller" {
       "eks.amazonaws.com/role-arn" = aws_iam_role.alb_controller.arn
     }
   }
+  provider = kubernetes
 }
