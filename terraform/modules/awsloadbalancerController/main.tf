@@ -63,20 +63,20 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   set = [
     {
-      name  = "autoDiscovery.clusterName"
-      value = var.eks_cluster_name
-    },
-    {
-      name  = "rbac.serviceAccount.create"
+      name  = "serviceAccount.create"
       value = "false"
     },
     {
-      name  = "rbac.serviceAccount.name"
+      name  = "serviceAccount.name"
       value = kubernetes_service_account.alb_controller.metadata[0].name
     },
        {
       name  = "vpcId"
       value = var.vpc_id
+    },
+    {
+      name = "clusterName"
+      value = var.eks_cluster_name
     }
   ]
   
