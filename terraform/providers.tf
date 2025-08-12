@@ -34,7 +34,8 @@ provider "helm" {
 
 provider "helm" {
   alias = "k8shelm"
-  kubernetes {
+  
+  kubernetes = {
     host                   = "https://example.com"
     cluster_ca_certificate = base64decode("Y2VydA==") # base64 "cert"
     token                  = "token"
