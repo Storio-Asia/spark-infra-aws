@@ -57,7 +57,7 @@ resource "helm_release" "cluster_autoscaler" {
   set = [
     {
       name  = "autoDiscovery.clusterName"
-      value = module.eks.cluster_name
+      value = var.eks_cluster_name
     },
     {
       name  = "rbac.serviceAccount.create"
