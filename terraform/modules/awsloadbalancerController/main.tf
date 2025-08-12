@@ -52,3 +52,32 @@ resource "kubernetes_service_account" "alb_controller" {
   }
   provider = kubernetes
 }
+
+
+resource "helm_release" "aws_load_balancer_controller" {
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+  version    = "1.7.0" # Use the appropriate version
+
+  set = [
+    {
+      name  = "autoDiscovery.clusterName"
+      value = var.eks_cluster_name
+    },
+    {
+      name  = "rbac.serviceAccount.create"
+      value = "false"
+    },
+    {
+      name  = "rbac.serviceAccount.name"
+      value = kubernetes_service_account.alb_controller.metadata[0].name
+    },
+       {
+      name  = "vpcId"
+      value = var.vpc_id
+    }
+  ]
+  
+}

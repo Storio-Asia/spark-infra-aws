@@ -36,3 +36,7 @@ variable "eks_oidc_provider_arn" {
     error_message = "EKS Cluster oidc provider arn must be provided"
   }
 }
+
+variable "vpc_id" {
+  type = string
+}

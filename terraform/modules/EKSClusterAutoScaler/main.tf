@@ -48,7 +48,7 @@ resource "kubernetes_service_account" "eks_autosacler_sa" {
   }
 }
 
-
+#################### EKS auto scaler installation via helm###########################
 resource "helm_release" "cluster_autoscaler" {
   name       = "clusterautoscaler"
   namespace  = "kube-system"
