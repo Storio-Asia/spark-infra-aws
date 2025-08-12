@@ -1,24 +1,19 @@
 terraform {
-  
   required_providers {
-    aws = {
-      source = "hashicorp/aws"
-      
-    }
-
-    tls = {
-      source = "hashicorp/tls"
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 3.0"
     }
     kubernetes = {
-      source = "hashicorp/kubernetes"
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.11"
     }
-    helm = {
-      source = "hashicorp/helm"
-      version = "~> 3.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.0"
     }
   }
 }
-
 provider "kubernetes" {
   alias = "k8s"
   host   = module.eks.cluster_endpoint
