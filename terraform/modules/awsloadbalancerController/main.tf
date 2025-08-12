@@ -5,7 +5,7 @@
 ############### Policy for AWS load balancer controller####################
 
 resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
-  name        = "AWSLoadBalancerControllerIAMPolicy"
+  name        = "AWSLoadBalancerControllerIAMPolicyV2"
   path        = "/"
   description = "AWS EKS Load balancer controller policy"
 
@@ -15,7 +15,7 @@ resource "aws_iam_policy" "AWSLoadBalancerControllerIAMPolicy" {
 
 ############# AWS Load balancer controller role ########################
 resource "aws_iam_role" "alb_controller" {
-  name = "AmazonEKSLoadBalancerControllerRole"
+  name = "AmazonEKSLoadBalancerControllerRoleV2"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
