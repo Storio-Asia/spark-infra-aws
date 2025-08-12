@@ -6,6 +6,15 @@ provider "kubernetes" {
 }
 */
 
+
+terraform {
+  required_providers {
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      #version = "~> 2.11"
+    }
+  }
+}
 provider "helm" {
   kubernetes {
     host                   = var.eks_cluster_endpoint

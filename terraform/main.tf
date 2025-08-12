@@ -472,7 +472,7 @@ module "elb"{
   eks_oidc_provider_arn = module.eks.oidc_provider_arn
   cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
   providers = {
-    kubernetes = kubernetes
+    kubernetes = kubernetes.k8s
   }
 }
 
