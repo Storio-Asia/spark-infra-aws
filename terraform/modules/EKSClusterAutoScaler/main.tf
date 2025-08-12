@@ -48,6 +48,7 @@ resource "kubernetes_service_account" "eks_autosacler_sa" {
   }
 }
 
+/*
 resource "helm_release" "cluster_autoscaler" {
   name       = "clusterautoscaler"
   namespace  = "kube-system"
@@ -70,5 +71,5 @@ resource "helm_release" "cluster_autoscaler" {
     }
   ]
 }
-
+*/
 
