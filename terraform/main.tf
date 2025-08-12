@@ -478,6 +478,7 @@ module "eksautoscaler"{
   eks_oidc_issuer_url = module.eks.cluster_oidc_issuer_url
   eks_oidc_provider_arn = module.eks.oidc_provider_arn
   cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
+ 
 }
 ############## creating EFS file system (EFS mount targets are created manually as terraform complained about subnet ids provided for mount target since ID of the subnet will not be known at plan time)###################
 module efs{
