@@ -47,7 +47,7 @@ resource "kubernetes_service_account" "eks_autosacler_sa" {
     }
   }
 }
-/*
+
 resource "helm_release" "cluster_autoscaler" {
   name = "cluster-autoscaler"
   namespace = "kube-system"
@@ -69,5 +69,5 @@ resource "helm_release" "cluster_autoscaler" {
     value = kubernetes_service_account.eks_autosacler_sa.metadata[0].name
   }
 }
-*/
+
 
