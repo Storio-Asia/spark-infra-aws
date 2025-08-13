@@ -44,3 +44,6 @@ variable "vpc_id" {
 variable "eks_oidc_provider" {
   type = string
 }
+variable "eks_cluster_arn" {
+  type = string
+}

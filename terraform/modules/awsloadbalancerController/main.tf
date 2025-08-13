@@ -44,7 +44,7 @@ resource "aws_iam_role" "alb_controller" {
       ],
       Condition = {
         StringEquals = {
-            "aws:SourceArn" = "${module.eks.cluster_arn}"
+            "aws:SourceArn" = "${var.eks_cluster_arn}"
         },
         StringLike = {
           "aws:SourceIdentity" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
