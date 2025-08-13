@@ -40,3 +40,7 @@ variable "eks_oidc_provider_arn" {
 variable "vpc_id" {
   type = string
 }
+
+variable "eks_oidc_provider" {
+  type = string
+}

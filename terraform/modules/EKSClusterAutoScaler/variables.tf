@@ -16,3 +16,6 @@ variable "cluster_certificate_authority_data" {
 variable "eks_oidc_provider_arn" {
   type = string
 }
+variable "eks_oidc_provider" {
+  type = string
+}

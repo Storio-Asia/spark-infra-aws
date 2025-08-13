@@ -472,6 +472,7 @@ module "elb"{
   eks_oidc_provider_arn = module.eks.oidc_provider_arn
   cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
   vpc_id = aws_vpc.this.id
+  eks_oidc_provider = module.eks.oidc_provider
   providers = {
     kubernetes = kubernetes.k8s
     helm = helm.k8shelm
@@ -485,6 +486,7 @@ module "eksautoscaler"{
   eks_cluster_endpoint = module.eks.cluster_endpoint
   eks_oidc_issuer_url = module.eks.cluster_oidc_issuer_url
   eks_oidc_provider_arn = module.eks.oidc_provider_arn
+  eks_oidc_provider = module.eks.oidc_provider
   cluster_certificate_authority_data = module.eks.cluster_certificate_authority_data
    
   providers = {
