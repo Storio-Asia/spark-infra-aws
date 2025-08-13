@@ -88,7 +88,7 @@ resource "aws_iam_role" "vpc_cni" {
       },
       "Action": [
         "sts:AssumeRole",
-        "sts.TagSession"
+        "sts:TagSession"
         ],
       "Condition": {
         "StringEquals" : {
