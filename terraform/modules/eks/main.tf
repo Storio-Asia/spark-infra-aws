@@ -71,17 +71,24 @@ resource "aws_iam_role" "vpc_cni" {
     {
       "Effect": "Allow",
       "Principal": {
-        "Federated": "${module.eks.oidc_provider_arn}"
+        "Federated": ["${module.eks.oidc_provider_arn}"],
+        "Service":[
+          "pods.eks.amazonaws.com"
+        ]
       },
-      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Action": [
+        "sts:AssumeRoleWithWebIdentity",
+        "sts.AssumeRole",
+        "sts.TagSession"
+        ],
       "Condition": {
         "StringEquals": {
           "${module.eks.oidc_provider}:aud": "sts.amazonaws.com",
           "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:aws-node",
-          "aws:SourceArn" = "arn:aws:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/${module.eks.cluster_name}"
+          "aws:SourceArn" : "arn:aws:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/${module.eks.cluster_name}"
         },
         "StringLike" : {
-                "aws:SourceIdentity" = "system:serviceaccount:kube-system:aws-node"
+                "aws:SourceIdentity" : "system:serviceaccount:kube-system:aws-node"
               }
       }
     }
