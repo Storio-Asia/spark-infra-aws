@@ -91,11 +91,11 @@ resource "aws_iam_role" "vpc_cni" {
         "sts.TagSession"
         ],
       "Condition": {
-        StringEquals = {
-            "aws:SourceArn" = "arn:aws:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/${module.eks.cluster_name}"
+        "StringEquals" : {
+            "aws:SourceArn" : "arn:aws:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/${module.eks.cluster_name}"
         },
-        StringLike = {
-          "aws:SourceIdentity" = "system:serviceaccount:kube-system:aws-node"
+        "StringLike" : {
+          "aws:SourceIdentity" : "system:serviceaccount:kube-system:aws-node"
         }
       }
     }
