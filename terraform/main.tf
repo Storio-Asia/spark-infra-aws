@@ -478,6 +478,7 @@ module "elb"{
   }
 }
 
+############# EKS autoscaler Controller module. Sets up Cluster auto scaler, its Iam role, SA account and install it via helm ################################
 module "eksautoscaler"{
   source = "./modules/EKSClusterAutoScaler"
   eks_cluster_name = module.eks.cluster_name
