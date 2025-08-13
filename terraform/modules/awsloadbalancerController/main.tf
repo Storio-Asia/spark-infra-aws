@@ -32,7 +32,25 @@ resource "aws_iam_role" "alb_controller" {
             "${var.eks_oidc_provider}:aud" = "sts.amazonaws.com"
           }
         }
+      },
+     {
+      Effect = "Allow",
+      Principal = {
+        Service = "pods.eks.amazonaws.com"
+      },
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ],
+      Condition = {
+        StringEquals = {
+            "aws:SourceArn" = "${module.eks.cluster_arn}"
+        },
+        StringLike = {
+          "aws:SourceIdentity" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+        }
       }
+    }
     ]
   })
 }

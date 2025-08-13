@@ -92,7 +92,7 @@ resource "aws_iam_role" "vpc_cni" {
         ],
       "Condition": {
         "StringEquals" : {
-            "aws:SourceArn" : "arn:aws:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:cluster/${module.eks.cluster_name}"
+            "aws:SourceArn" : "${module.eks.cluster_arn}"
         },
         "StringLike" : {
           "aws:SourceIdentity" : "system:serviceaccount:kube-system:aws-node"
