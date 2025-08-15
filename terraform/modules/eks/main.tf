@@ -14,7 +14,7 @@ module "eks" {
   vpc_id = var.eks_config.vpc_id
   subnet_ids = var.eks_config.subnet_ids
   eks_managed_node_groups = local.node_config_with_efs
-  enabled_log_types = var.eks_config.enabled_log_types
+  enabled_log_types = var.eks_config.enable_log_types
   access_entries = var.eks_config.access_entries
   tags = var.eks_config.tags
   addons = {
