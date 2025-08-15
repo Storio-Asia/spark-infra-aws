@@ -366,11 +366,12 @@ resource "aws_iam_role_policy_attachment" "vpc_flow_logs_role_policy_attachment"
   role      = aws_iam_role.vpc_flow_logs_role.name
 }
 
+/*
 resource "aws_cloudwatch_log_group" "this" {
   # checkov:skip=CKV_AWS_158: "Ensure that CloudWatch Log Group is encrypted by KMS"
   # checkov:skip=CKV_AWS_338: "Ensure CloudWatch log groups retains logs for at least 1 year"
   name              =  "vpc/flowlogs/spark-storio-dev-${aws_vpc.this.id}"
-  retention_in_days = 90
+  retention_in_days = 1
   tags = local.env.tags
 }
 
@@ -387,7 +388,7 @@ resource "aws_flow_log" "local" {
   tags = local.env.tags
 }
 ##########################end vpc flow logs#########################
-
+*/
 ########### EFS policy will be attached to the workder for mounting of EFS file system ###############
 resource "aws_iam_policy" "node_efs_policy" {
   name        = "eks_node_efs_policy"

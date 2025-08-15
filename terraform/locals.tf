@@ -123,7 +123,8 @@ locals {
         #subnet_ids = [for subnet in aws_subnet.app : subnet.id]
         endpoint_public_access = true
         endpoint_private_access = true
-        
+        create_cloudwatch_log_group = false # for dev enviornment
+        enable_log_types = [] # do not enable control plane logs        
        
         eks_managed_node_groups = {
          dev-ng = {
