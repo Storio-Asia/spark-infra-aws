@@ -30,7 +30,7 @@ module "eks" {
     }
     vpc-cni = {
       before_compute = true
-      service_account_role_arn = aws_iam_role.vpc_cni.arn
+      #service_account_role_arn = aws_iam_role.vpc_cni.arn
     }
     aws-efs-csi-driver = {
 
