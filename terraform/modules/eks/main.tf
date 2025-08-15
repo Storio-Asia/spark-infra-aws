@@ -16,6 +16,7 @@ module "eks" {
   eks_managed_node_groups = local.node_config_with_efs
   enabled_log_types = var.eks_config.enable_log_types
   access_entries = var.eks_config.access_entries
+  create_cloudwatch_log_group = var.eks_config.create_cloudwatch_log_group
   tags = var.eks_config.tags
   addons = {
     coredns = {

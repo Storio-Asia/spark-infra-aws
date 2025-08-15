@@ -373,7 +373,7 @@ resource "aws_cloudwatch_log_group" "this" {
   name              =  "vpc/flowlogs/spark-storio-dev-${aws_vpc.this.id}"
   retention_in_days = 1
   tags = local.env.tags
-}
+#}
 
 ########### vpc flowlogs ################
 resource "aws_flow_log" "local" {
@@ -389,6 +389,7 @@ resource "aws_flow_log" "local" {
 }
 ##########################end vpc flow logs#########################
 */
+
 ########### EFS policy will be attached to the workder for mounting of EFS file system ###############
 resource "aws_iam_policy" "node_efs_policy" {
   name        = "eks_node_efs_policy"
