@@ -9,7 +9,7 @@ on:
  
 env:
   
-  AWS_REGION : "ap-southeast-2" #Change to reflect your Region
+  AWS_REGION : "ap-southeast-5" #Change to reflect your Region
   STATE_BUCKET : "storio-asia-terraform-state"
   KEY: "state.tfstate"
   DYNAODB_LOCK_TABLE : "terraform-state-lock-dynamodb"
@@ -20,22 +20,119 @@ permissions:
       id-token: write   # This is required for requesting the JWT
       contents: read    # This is required for actions/checkout
 jobs:
-  plan:
+  
+  terraform_Plan:
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.collect.outputs.changed }}
+    name: Plan Stage
+    strategy:
+      max-parallel: 10
+      matrix:
+        dir: ['terraform']
+    environment: prod
+    env:
+      ENVIRONMENT: "prod"
+    defaults:
+      run:
+        working-directory: ./${{matrix.dir}}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Setup Terraform
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::483898562597:role/github_role
+          role-session-name: storio_github_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+
+      
+      - name: Sts GetCallerIdentity
+        run: |
+          aws sts get-caller-identity
+      
+      - name: setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: pwd
-        id: pwd
-        run: |
-          pwd
-      - name: ls
-        id: ls
-        run: |
-          ls -R terraform
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config="bucket=${{env.STATE_BUCKET}}" -backend-config="key=${{env.client}}/${{env.KEY}}" -backend-config="region=${{env.AWS_REGION}}" # -backend-config="workspace_key_prefix=dev" 
+      
+      - name: Terraform Version
+        run: terraform version
+
+      - name: Show Terraform providers versions
+        run: terraform providers
+
+      - name: Terraform Plan
+        id: plan
+        run: | 
+          export WORKSPACE=${{env.environment}}
+          terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
+          terraform plan
+      
+  manual-approval:
+    runs-on: ubuntu-latest
+    name: manual approval
+    needs: terraform_Plan
+    if: success()
+
+    permissions:
+      issues: write
+    
+    steps:
+      - name: Await manual approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: hassanbaber
+          issue-title: "Manual approval required for terraform apply"
+          issue-body: "Please approve or deny the deployment"
+  
+  terraform_apply:
+    runs-on: ubuntu-latest
+    name: terraform apply
+    needs: manual-approval
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      max-parallel: 10
+      matrix:
+        dir: ['terraform']
+    defaults:
+      run:
+        working-directory: ./${{matrix.dir}}
+    
+    steps:
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: arn:aws:iam::483898562597:role/github_role
+          role-session-name: storio_github_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+            terraform_version: '1.12.2'
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init -upgrade -backend-config="bucket=${{env.STATE_BUCKET}}" -backend-config="key=${{env.client}}/${{env.KEY}}" -backend-config="region=${{env.AWS_REGION}}" # -backend-config="workspace_key_prefix=dev"
+      
+      
+
+      - name: Terraform Apply
+        id: apply
+        run: | 
+          export WORKSPACE=${{env.environment}}
+          terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
+          terraform apply --auto-approve
+      
+      
+
