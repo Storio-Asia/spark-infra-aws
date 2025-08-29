@@ -62,7 +62,7 @@ jobs:
         run: | 
           export WORKSPACE=${{env.environment}}
           terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
-          terraform plan -destory
+          terraform plan -destroy
       
   manual-approval:
     runs-on: ubuntu-latest
@@ -82,7 +82,7 @@ jobs:
           issue-title: "Manual approval required for terraform apply"
           issue-body: "Please approve or deny the deployment"
   
-  terraform_destory_apply:
+  terraform_destroy_apply:
     runs-on: ubuntu-latest
     name: terraform apply
     needs: manual-approval
@@ -124,7 +124,7 @@ jobs:
         run: | 
           export WORKSPACE=${{env.environment}}
           terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
-          terraform destory --auto-approve
+          terraform destroy --auto-approve
 
 
 
