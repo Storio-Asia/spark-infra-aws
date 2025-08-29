@@ -4,9 +4,7 @@ name:
 
 # Controls when the action will run. Invokes the workflow on push events but only for the main branch
 on:
-  push:
-    branches: [ main ]
- 
+  workflow_dispatch:
 env:
   
   AWS_REGION : "ap-southeast-5" #Change to reflect your Region
@@ -21,7 +19,7 @@ permissions:
       contents: read    # This is required for actions/checkout
 jobs:
   
-  terraform_Plan:
+  terraform_destroy_Plan:
     runs-on: ubuntu-latest
     name: Plan Stage
     strategy:
@@ -58,23 +56,18 @@ jobs:
         id: init
         run: terraform init -backend-config="bucket=${{env.STATE_BUCKET}}" -backend-config="key=${{env.client}}/${{env.KEY}}" -backend-config="region=${{env.AWS_REGION}}" # -backend-config="workspace_key_prefix=dev" 
       
-      - name: Terraform Version
-        run: terraform version
-
-      - name: Show Terraform providers versions
-        run: terraform providers
-
-      - name: Terraform Plan
+      
+      - name: Terraform Destory Plan
         id: plan
         run: | 
           export WORKSPACE=${{env.environment}}
           terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
-          terraform plan
+          terraform plan -destory
       
   manual-approval:
     runs-on: ubuntu-latest
     name: manual approval
-    needs: terraform_Plan
+    needs: terraform_destroy_Plan
     if: success()
 
     permissions:
@@ -89,7 +82,7 @@ jobs:
           issue-title: "Manual approval required for terraform apply"
           issue-body: "Please approve or deny the deployment"
   
-  terraform_apply:
+  terraform_destory_apply:
     runs-on: ubuntu-latest
     name: terraform apply
     needs: manual-approval
@@ -126,109 +119,13 @@ jobs:
       
       
 
-      - name: Terraform Apply
+      - name: Terraform Destory Apply
         id: apply
         run: | 
           export WORKSPACE=${{env.environment}}
           terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
-          terraform apply --auto-approve
+          terraform destory --auto-approve
 
 
 
-  terraform_destroy_plan:
-    runs-on: ubuntu-latest
-    name: terraform apply
-    needs: manual-approval
-    permissions:
-      id-token: write
-      contents: read
-    strategy:
-      max-parallel: 10
-      matrix:
-        dir: ['terraform']
-    defaults:
-      run:
-        working-directory: ./${{matrix.dir}}
-    
-    steps:
-
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1.7.0
-        with:
-          role-to-assume: arn:aws:iam::483898562597:role/github_role
-          role-session-name: storio_github_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
-          
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      
-      - name: Terraform Init
-        id: init
-        run: terraform init -upgrade -backend-config="bucket=${{env.STATE_BUCKET}}" -backend-config="key=${{env.client}}/${{env.KEY}}" -backend-config="region=${{env.AWS_REGION}}" # -backend-config="workspace_key_prefix=dev"
-      
-      - name: Terraform Destory Plan
-        id: destroy_plan
-        run: terraform plan -destroy
-
-  manual-approval_destroy:
-    runs-on: ubuntu-latest
-    name: manual approval
-    needs: terraform_Plan
-    if: success()
-
-    permissions:
-      issues: write
-    
-    steps:
-      - name: Await manual approval
-        uses: trstringer/manual-approval@v1
-        with:
-          secret: ${{ github.TOKEN }}
-          approvers: hassanbaber
-          issue-title: "Manual approval required for terraform apply"
-          issue-body: "Please approve or deny the deployment"
-
-
-  terraform_destroy_apply:
-    runs-on: ubuntu-latest
-    name: terraform apply
-    needs: manual-approval
-    permissions:
-      id-token: write
-      contents: read
-    strategy:
-      max-parallel: 10
-      matrix:
-        dir: ['terraform']
-    defaults:
-      run:
-        working-directory: ./${{matrix.dir}}
-    
-    steps:
-
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1.7.0
-        with:
-          role-to-assume: arn:aws:iam::483898562597:role/github_role
-          role-session-name: storio_github_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
-          
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-            terraform_version: '1.12.2'
-      
-      - name: Terraform Init
-        id: init
-        run: terraform init -upgrade -backend-config="bucket=${{env.STATE_BUCKET}}" -backend-config="key=${{env.client}}/${{env.KEY}}" -backend-config="region=${{env.AWS_REGION}}" # -backend-config="workspace_key_prefix=dev"
-      - name: Terraform Destroy Apply
-        id: TerraformDestroy
-        run : |
-          terraform destroy
+  
