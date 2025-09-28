@@ -17,6 +17,12 @@ This repository contains Terraform code to provision and manage Spark infrastruc
   4. Manual Approval
   5. Terraform Apply
 
+### Infrastructure Cleanup
+- **Trigger**: Manual workflow dispatch
+- **Steps**:
+  1. Terraform initialization
+  2. Automated destroy with approval
+
 ### Root Infrastructure
 | Resource | Purpose |
 |---|---|
