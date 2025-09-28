@@ -20,16 +20,16 @@ This repository contains Terraform code to provision and manage Spark infrastruc
 ### Root Infrastructure
 | Resource | Purpose |
 |---|---|
-| aws_vpc.this | VPC |
-| aws_subnet.web | Web subnets for Load balancer |
-| aws_route_table.web-rt |  Route table for web subnet |
-| aws_route_table_assocation.app | Route table assocation with web subnets |
-| aws_subnet.app | Web subnets for eks cluster deployment |
-| aws_route_table.app-rt |  Route table for app subnet |
-| aws_route_table_assocation.app | Route table assocation with app subnets |
-| aws_subnet.db | DB subnets for RDS |
-| aws_route_table.db-rt |  Route table for db subnet |
-| aws_route_table_assocation.db | Route table assocation with db subnets |
+|aws_vpc.this | VPC |
+|aws_subnet.web | Web subnets for Load balancer |
+|aws_route_table.web-rt |  Route table for web subnet |
+|aws_route_table_assocation.app | Route table assocation with web subnets |
+|aws_subnet.app | Web subnets for eks cluster deployment |
+|aws_route_table.app-rt |  Route table for app subnet |
+|aws_route_table_assocation.app | Route table assocation with app subnets |
+|aws_subnet.db | DB subnets for RDS |
+|aws_route_table.db-rt |  Route table for db subnet |
+|aws_route_table_assocation.db | Route table assocation with db subnets |
 |aws_route.db_internet_route| route to allow RDS instance internet access. This was requried for developers access|
 |aws_network_acl.web|Web subnet NACL|
 |aws_network_acl.app| App NACL|
@@ -43,10 +43,14 @@ This repository contains Terraform code to provision and manage Spark infrastruc
 |aws_route.app_internet_route| Internet route for app subnets|
 |aws_security_group.rds_sg| RDS security group|
 |aws_db_subnet_group.rds_subnet_group| Subnet Group to deploy RDS Instance|
+
+### RDS
+| Resource | Purpose |
+|---|---|
 |aws_db_instance.mysql| MySQL RDS Instance|
 
 ### IAM Role and policies
-|Resource|Purpose|
+| Resource | Purpose |
 |---|---|
 |aws_iam_role.aws_flow_logs_role| VPC flow logs role|
 |aws_iam_policy.vpc_flow_logs_policy| VPC flow logs policy|
@@ -57,13 +61,47 @@ This repository contains Terraform code to provision and manage Spark infrastruc
 |Resource| Purpose|
 |---|---|
 |aws_s3_bucket.spark-dev-bucket| S3 Storage|
-|module eks|EKS cluster|
-|||
-| aws_s3_bucket_public_access_block.root_storage_bucket | Public access block for root bucket |
-| aws_s3_bucket_policy.root_bucket_policy | Policy for root bucket |
-| aws_kms_key.workspace_storage | KMS key for workspace storage |
-| aws_kms_alias.workspace_storage_key_alias | Alias for workspace storage key |
-| aws_kms_key.managed_services | KMS key for managed services |
-| aws_kms_alias.managed_services_key_alias | Alias for managed services key |
-| aws_kms_key.catalog_storage | KMS key for catalog storage |
-| aws_kms_alias.catalog_storage_key_alias | Alias for catalog storage key |
+
+### EKS Cluster
+| Resource | Purpose |
+|---|---|
+| eks | EKS cluster for running Storio application |
+
+### ELB Controller
+| Resrouce | Purpose|
+|---|---|
+| elb | Installs AWS Elastic load balancer controllers on the EKS cluster |
+
+### Autoscaler
+| Resrouce | Purpose|
+|---|---|
+| eksautoscaler | Setups EKS autoscaler for pods scalling functionality |
+
+### EFS file system
+| Resrouce | Purpose|
+|---|---|
+| efs | NFS file system share for EKS cluster to use |
+
+### Modules Description
+
+### eks
+- Deploys AWS EKS cluster
+- Configure EKS cluster to deployment to app subnets
+- Setup logs
+- setup EKS Access entries
+- Configure cloudwatch logs group
+- Sets up and configures eks managed node group
+
+### efs
+- Deploys AWS EFS file system
+
+### awsloadbalancerController
+- Deploys AWS Load balancer controller in EKS cluster using helm provider
+- Configure iam role and policy for controller to use
+- Configures service account 
+
+### EKSClusterAutoSclaer
+- Deploys AWS EKS cluster Auto scaler using helm provider
+- Configure iam role and policy for cluster autoscaler to use
+- confgiures service account
+
