@@ -3,7 +3,7 @@ This repository contains Terraform code to provision and manage Spark infrastruc
 
 ## Project Structure
 - **terraform/**: Main Terraform configuration and modules
-    - **modules/**: Reusable Terraform modules for Databricks and AWS resources
+    - **modules/**: Reusable Terraform modules for AWS resources
 - **.github/workflows/**: CI/CD workflows for infrastructure deployment
     - **workflow.yaml**: Applies changes to on push to main branch
     - **terraform-destroy.yaml**: Manual workflow for infrastructure teardown
